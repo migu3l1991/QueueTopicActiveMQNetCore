@@ -21,6 +21,7 @@ namespace Retail.Services
             shippingOrder orden = new shippingOrder
             {
                 organization = peticion.Organizacion,
+                idOrder = peticion.ShippingId,
                 order = productos
             };
             Task<ordenarResponse> response = cliente.ordenarAsync(orden);

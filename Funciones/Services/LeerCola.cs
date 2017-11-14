@@ -1,5 +1,6 @@
 ﻿using Apache.NMS;
 using Apache.NMS.Util;
+using Funciones.Database;
 using Funciones.DTO;
 using Funciones.Model;
 using Newtonsoft.Json;
@@ -8,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace Funciones.Services
@@ -21,14 +24,15 @@ namespace Funciones.Services
         //const string Topic = "topic://Ordenes";
         const string Queue = "queue://TestNet";
 
-
+        private readonly FacturaRepository _facturaService;
 
         /*private static List<DTOOrden> facturas;
         private static DTOOrden factura = null;*/
         //private static float valorUSD = 0;
 
-        public LeerCola()
+        public LeerCola(FacturaRepository facturaService)
         {
+            _facturaService = facturaService;
             //facturas = new List<DTOOrden>();
             LeerOrden();
             SuscribirseTopic("Miguel");
@@ -42,7 +46,7 @@ namespace Funciones.Services
             return connection;
         }
         
-        public static void SuscribirseTopic(string topic)
+        public void SuscribirseTopic(string topic)
         {
             var connecturi = new Uri(uriTopic);
             var factory = new NMSConnectionFactory(connecturi);
@@ -68,11 +72,19 @@ namespace Funciones.Services
         {
             var request = receivedMsg as ITextMessage;
             var message = request?.Text;
-            //factura = JsonConvert.DeserializeObject<DTOOrden>(message);
+            DTOOrden factura = JsonConvert.DeserializeObject<DTOOrden>(message);
+            List<DTOProductosOrden> items = new List<DTOProductosOrden>();
+            foreach(var producto in factura.Productos)
+            {
+                items.Add(new DTOProductosOrden(producto.SKU.ToString(),producto.Cantidad));
+            }
+            DTOOrdenar orden = new DTOOrdenar(factura.Organizacion,factura.Id, items);
             ConvertirUSD();
+            var client = new HttpClient();
+            HttpResponseMessage response = client.PostAsync("http://localhost:60548/api/values", new StringContent(JsonConvert.SerializeObject(orden), Encoding.UTF8, "application/json")).Result;
         }
 
-        protected static void OnMessageTopic(IMessage receivedMsg)
+        protected void OnMessageTopic(IMessage receivedMsg)
         {
             var request = receivedMsg as ITextMessage;
             var message = request?.Text;
@@ -82,9 +94,15 @@ namespace Funciones.Services
             {
                 doc = XDocument.Load(s);
             }
+            string estado = "Rechazada";
+            if (doc.Root.Element("orderReceivedStatus").Value.Equals("true") )
+            {
+                estado = "Aceptada";
+            }
+            Task<Factura> factura = _facturaService.FindFacturaAsync(int.Parse(doc.Root.Element("id").Value));
+            factura.Result.Estado = estado;
+            _facturaService.UpdateFactura(factura.Result);
             ConvertirCOP(doc.Root.Element("shippingOrder").Element("TOTAL").Value);
-            //var itemXml = XElement.Load(message);
-            //factura = JsonConvert.DeserializeObject<DTOOrden>(message);
         }
 
         public static void ConvertirUSD()

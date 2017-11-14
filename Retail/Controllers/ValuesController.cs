@@ -26,7 +26,6 @@ namespace Retail.Controllers
         [HttpPost]
         public void Post([FromBody]DTOOrdenar value)
         {
-            //TODO:Aca se debe recibir los datos que necesitara el servicio SOAP
             ServicesWSDL.Ordenar(value);
         }
 
