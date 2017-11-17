@@ -20,22 +20,17 @@ namespace Funciones.Services
         const string userName = "admin";
         const string password = "admin";
         const string uri = "activemq:tcp://localhost:61616";
+        const string uriRespuesta = "activemq:tcp://35.193.201.229:61616";
         const string uriTopic = "activemq:tcp://35.193.201.229:61616";
-        //const string Topic = "topic://Ordenes";
         const string Queue = "queue://TestNet";
+        const string QueueRespuesta = "queue://mailerqueue​ ";
 
         private readonly FacturaRepository _facturaService;
-
-        /*private static List<DTOOrden> facturas;
-        private static DTOOrden factura = null;*/
-        //private static float valorUSD = 0;
 
         public LeerCola(FacturaRepository facturaService)
         {
             _facturaService = facturaService;
-            //facturas = new List<DTOOrden>();
             LeerOrden();
-            SuscribirseTopic("Miguel");
         }
 
         public IConnection Conexion()
@@ -68,7 +63,7 @@ namespace Funciones.Services
             _consumer.Listener += new MessageListener(OnMessage);
         }
 
-        protected static void OnMessage(IMessage receivedMsg)
+        protected void OnMessage(IMessage receivedMsg)
         {
             var request = receivedMsg as ITextMessage;
             var message = request?.Text;
@@ -80,6 +75,7 @@ namespace Funciones.Services
             }
             DTOOrdenar orden = new DTOOrdenar(factura.Organizacion,factura.Id, items);
             ConvertirUSD();
+            SuscribirseTopic(factura.Organizacion);
             var client = new HttpClient();
             HttpResponseMessage response = client.PostAsync("http://localhost:60548/api/values", new StringContent(JsonConvert.SerializeObject(orden), Encoding.UTF8, "application/json")).Result;
         }
@@ -100,9 +96,16 @@ namespace Funciones.Services
                 estado = "Aceptada";
             }
             Task<Factura> factura = _facturaService.FindFacturaAsync(int.Parse(doc.Root.Element("id").Value));
+            factura.Wait();
             factura.Result.Estado = estado;
             _facturaService.UpdateFactura(factura.Result);
-            ConvertirCOP(doc.Root.Element("shippingOrder").Element("TOTAL").Value);
+            JObject json = new JObject
+            {
+                new JProperty("to",factura.Result.Correo),
+                new JProperty("subject","Cobro"),
+                new JProperty("message","El costo de la factura es de " + ConvertirCOP(doc.Root.Element("shippingOrder").Element("TOTAL").Value).ToString() + " y el estado es " + doc.Root.Element("orderReceivedStatus").Value)
+            };
+            EscribirRespuesta(json);
         }
 
         public static void ConvertirUSD()
@@ -119,19 +122,35 @@ namespace Funciones.Services
             facturas.Add(factura);*/
         }
 
-        public static void ConvertirCOP(string precio)
+        public static double ConvertirCOP(string precio)
         {
             var client = new HttpClient();
             HttpResponseMessage response = client.GetAsync("https://free.currencyconverterapi.com/api/v4/convert?q=USD_COP&compact=y").Result;
             string stringData = response.Content.ReadAsStringAsync().Result;
             JObject json = JObject.Parse(stringData);
             double valorCOP = json.GetValue("USD_COP").First.First.Value<float>();
-            double precioCOP = double.Parse(precio) * valorCOP;
-           /* foreach (var producto in factura.Productos)
-            {
-                producto.Precio = (valorUSD * float.Parse(producto.Precio)).ToString();
-            }
-            facturas.Add(factura);*/
+            return double.Parse(precio) * valorCOP;
+            /* foreach (var producto in factura.Productos)
+             {
+                 producto.Precio = (valorCOP * float.Parse(producto.Precio)).ToString();
+             }
+             facturas.Add(factura);*/
+        }
+
+        public bool EscribirRespuesta(JObject message)
+        {
+            var connecturi = new Uri(uriRespuesta);
+            var factory = new NMSConnectionFactory(connecturi);
+            var connection = factory.CreateConnection(userName, password);
+            connection.Start();
+            ISession _session = connection.CreateSession();
+            IDestination queueDestination = SessionUtil.GetDestination(_session, QueueRespuesta);
+            IMessageProducer _producer = _session.CreateProducer(queueDestination);
+            var response = _session.CreateTextMessage();
+            string jsonMessage = JsonConvert.SerializeObject(message);
+            response.Text = jsonMessage;
+            _producer.Send(response);
+            return true;
         }
     }
 }

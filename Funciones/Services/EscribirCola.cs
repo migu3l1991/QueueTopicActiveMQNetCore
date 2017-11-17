@@ -11,7 +11,6 @@ namespace Funciones.Services
         const string userName = "admin";
         const string password = "admin";
         const string uri = "activemq:tcp://localhost:61616";
-        //const string Topic = "topic://Ordenes";
         const string Queue = "queue://TestNet";
 
         public static IConnection Conexion()

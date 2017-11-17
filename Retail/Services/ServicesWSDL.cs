@@ -25,8 +25,6 @@ namespace Retail.Services
                 order = productos
             };
             Task<ordenarResponse> response = cliente.ordenarAsync(orden);
-            response.Wait();
-            System.Diagnostics.Debug.WriteLine(response);
         }
     }
 }
