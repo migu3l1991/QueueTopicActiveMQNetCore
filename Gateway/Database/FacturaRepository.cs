@@ -1,8 +1,8 @@
-﻿using Funciones.Model;
+﻿using Gateway.Model;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
-namespace Funciones.Database
+namespace Gateway.Database
 {
     public class FacturaRepository
     {

@@ -1,7 +1,7 @@
-﻿using Funciones.Model;
+﻿using Gateway.Model;
 using System.Collections.Generic;
 
-namespace Funciones.DTO
+namespace Gateway.DTO
 {
     public class DTOOrden
     {

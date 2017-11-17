@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Funciones.Model
+namespace Gateway.Model
 {
     public class Factura
     {
@@ -12,9 +11,7 @@ namespace Funciones.Model
         public string Correo { get; set; }
         public string Estado { get; set; }
 
-        public Factura()
-        {
-        }
+        public Factura() {}
 
         public Factura(int id, string nombre, string cedula, string correo)
         {

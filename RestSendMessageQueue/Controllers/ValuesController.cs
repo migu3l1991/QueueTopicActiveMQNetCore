@@ -1,37 +1,23 @@
-﻿using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using Funciones.Services;
-using Funciones.Model;
-using Funciones.Database;
-using Funciones.DTO;
+﻿using Microsoft.AspNetCore.Mvc;
+using Gateway.Services;
+using Gateway.Model;
+using Gateway.Database;
+using Gateway.DTO;
 
-namespace RestSendMessageQueue.Controllers
+namespace ReceptorOrden.Controllers
 {
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
         private readonly FacturaRepository _facturaService;
+        private readonly EscribirCola _escribirCola;
 
-        public ValuesController(FacturaRepository facturaService)
+        public ValuesController(FacturaRepository facturaService, EscribirCola escribirCola)
         {
             _facturaService = facturaService;
+            _escribirCola = escribirCola;
         }
-
-        // GET api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/values
+        
         [HttpPost]
         public bool Post([FromBody]DTOOrden value)
         {
@@ -47,22 +33,10 @@ namespace RestSendMessageQueue.Controllers
                         producto.Factura = factura;
                         _facturaService.AddProducto(producto);
                     }
-                    EscribirCola.Escribir(value);
+                    _escribirCola.EscribirOrden(value);
                 }
             }
             return true;
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
         }
     }
 }

@@ -6,9 +6,9 @@ namespace Retail.Services
 {
     public class ServicesWSDL
     {
-        public static void Ordenar(DTOOrdenar peticion)
+        public async Task Ordenar(DTOOrdenar peticion)
         {
-            WSOrden.orderServiceClient cliente = new WSOrden.orderServiceClient();
+            orderServiceClient cliente = new orderServiceClient();
             orderItem[] productos = new orderItem[peticion.Productos.Count];
             int contador = 0;
             foreach(var producto in peticion.Productos)
@@ -24,7 +24,7 @@ namespace Retail.Services
                 idOrder = peticion.ShippingId,
                 order = productos
             };
-            Task<ordenarResponse> response = cliente.ordenarAsync(orden);
+            await cliente.ordenarAsync(orden);
         }
     }
 }

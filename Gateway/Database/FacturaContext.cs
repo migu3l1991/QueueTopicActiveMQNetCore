@@ -1,8 +1,8 @@
-﻿using Funciones.Model;
+﻿using Gateway.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Funciones.Database
+namespace Gateway.Database
 {
     public class FacturaContext : DbContext
     {

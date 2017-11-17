@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Funciones.Model
+namespace Gateway.Model
 {
     public class Producto
     {

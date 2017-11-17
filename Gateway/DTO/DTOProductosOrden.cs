@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Funciones.DTO
+﻿namespace Gateway.DTO
 {
     public class DTOProductosOrden
     {
